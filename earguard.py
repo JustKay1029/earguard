@@ -1,4 +1,5 @@
 import streamlit as st
+import os
 import time
 from datetime import datetime
 import math
@@ -12,91 +13,107 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 html, body, [class*="css"] {
-    font-family: 'DM Sans', sans-serif;
-    background-color: #1a1a1a;
+    font-family: 'Space Grotesk', sans-serif;
+    background-color: #0f0f0f;
     color: #e0e0e0;
 }
-.stApp { background-color: #1a1a1a; }
+.stApp { background-color: #0f0f0f; }
 section[data-testid="stSidebar"] { display: none; }
 #MainMenu, footer, header { visibility: hidden; }
 .block-container { padding: 0 0 80px 0 !important; max-width: 480px; margin: 0 auto; }
 
 .eg-card {
-    background: #2a2a2a; border-radius: 14px;
-    padding: 18px 20px; margin-bottom: 12px; border: 1px solid #333;
+    background: linear-gradient(145deg, #1c1c1c, #161616);
+    border-radius: 20px;
+    padding: 20px 22px;
+    margin-bottom: 12px;
+    border: 1px solid #2a2a2a;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
 }
 .eg-card-title {
-    font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
-    color: #666; text-transform: uppercase; margin-bottom: 14px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.18em;
+    color: #444; text-transform: uppercase; margin-bottom: 14px;
 }
 .eg-header {
-    background: #2a2a2a; padding: 16px 20px;
+    background: linear-gradient(180deg, #1a1a1a 0%, #141414 100%);
+    padding: 18px 22px;
     display: flex; justify-content: space-between; align-items: center;
-    border-bottom: 1px solid #333; margin-bottom: 12px;
+    border-bottom: 1px solid #222; margin-bottom: 14px;
 }
-.eg-logo { font-size: 18px; font-weight: 600; color: #f0f0f0; }
-.badge-safe    { background:#1a3a2a; color:#4ade80; padding:3px 12px; border-radius:99px; font-size:12px; font-weight:500; }
-.badge-caution { background:#3a2e1a; color:#EF9F27; padding:3px 12px; border-radius:99px; font-size:12px; font-weight:500; }
-.badge-danger  { background:#3a1a1a; color:#f87171; padding:3px 12px; border-radius:99px; font-size:12px; font-weight:500; }
-.badge-speaker { background:#1a2535; color:#60a5fa; padding:3px 12px; border-radius:99px; font-size:12px; font-weight:500; }
+.eg-logo { font-size: 17px; font-weight: 700; color: #f5f5f5; letter-spacing: -0.02em; }
+.eg-logo span { color: #EF9F27; }
+
+.badge-safe    { background:rgba(74,222,128,0.12);  color:#4ade80; padding:4px 14px; border-radius:99px; font-size:11px; font-weight:600; border:1px solid rgba(74,222,128,0.2);  letter-spacing:0.06em; }
+.badge-caution { background:rgba(239,159,39,0.12);  color:#EF9F27; padding:4px 14px; border-radius:99px; font-size:11px; font-weight:600; border:1px solid rgba(239,159,39,0.2);  letter-spacing:0.06em; }
+.badge-danger  { background:rgba(248,113,113,0.12); color:#f87171; padding:4px 14px; border-radius:99px; font-size:11px; font-weight:600; border:1px solid rgba(248,113,113,0.2); letter-spacing:0.06em; }
+.badge-speaker { background:rgba(96,165,250,0.12);  color:#60a5fa; padding:4px 14px; border-radius:99px; font-size:11px; font-weight:600; border:1px solid rgba(96,165,250,0.2);  letter-spacing:0.06em; }
 
 .metric-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
-.metric-box  { background:#2a2a2a; border-radius:12px; padding:14px 16px; border:1px solid #333; }
-.metric-lbl  { font-size:12px; color:#666; margin-bottom:4px; }
-.metric-val  { font-size:22px; font-weight:500; color:#f0f0f0; }
+.metric-box  { background:linear-gradient(145deg,#1c1c1c,#161616); border-radius:14px; padding:16px 18px; border:1px solid #2a2a2a; }
+.metric-lbl  { font-size:11px; color:#444; margin-bottom:6px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; }
+.metric-val  { font-size:24px; font-weight:600; color:#f0f0f0; letter-spacing:-0.02em; }
 
-.vol-track { background:#3a3a3a; border-radius:99px; height:6px; overflow:hidden; margin:8px 0 4px; }
+.vol-track { background:#222; border-radius:99px; height:5px; overflow:hidden; margin:8px 0 4px; }
 .vol-fill  { height:100%; border-radius:99px; }
-
-.prog-track { background:#3a3a3a; border-radius:99px; height:10px; overflow:hidden; margin:10px 0 4px; }
+.prog-track { background:#222; border-radius:99px; height:8px; overflow:hidden; margin:12px 0 4px; }
 .prog-fill  { height:100%; border-radius:99px; }
 
-.alert-warn   { background:#2e2510; border-left:3px solid #EF9F27; border-radius:8px; padding:10px 14px; margin:8px 0; font-size:13px; color:#EF9F27; }
-.alert-danger { background:#2e1010; border-left:3px solid #f87171; border-radius:8px; padding:10px 14px; margin:8px 0; font-size:13px; color:#f87171; }
-.alert-safe   { background:#102e1a; border-left:3px solid #4ade80; border-radius:8px; padding:10px 14px; margin:8px 0; font-size:13px; color:#4ade80; }
-.alert-info   { background:#1a2535; border-left:3px solid #60a5fa; border-radius:8px; padding:10px 14px; margin:8px 0; font-size:13px; color:#60a5fa; }
+.alert-warn   { background:rgba(239,159,39,0.08);  border-left:3px solid #EF9F27; border-radius:10px; padding:12px 16px; margin:8px 0; font-size:13px; color:#EF9F27; }
+.alert-danger { background:rgba(248,113,113,0.08); border-left:3px solid #f87171; border-radius:10px; padding:12px 16px; margin:8px 0; font-size:13px; color:#f87171; }
+.alert-safe   { background:rgba(74,222,128,0.08);  border-left:3px solid #4ade80; border-radius:10px; padding:12px 16px; margin:8px 0; font-size:13px; color:#4ade80; }
+.alert-info   { background:rgba(96,165,250,0.08);  border-left:3px solid #60a5fa; border-radius:10px; padding:12px 16px; margin:8px 0; font-size:13px; color:#60a5fa; }
 
-.timer-big { font-family:'DM Mono',monospace; font-size:52px; font-weight:500;
-             color:#EF9F27; text-align:center; letter-spacing:0.05em; }
-.timer-sub { font-size:12px; color:#555; text-align:center; margin-top:-4px; margin-bottom:8px; }
-.dose-label { font-size:11px; color:#555; text-align:right; margin-top:2px; }
+.timer-big { font-family:'JetBrains Mono',monospace; font-size:54px; font-weight:500; color:#EF9F27; text-align:center; letter-spacing:0.04em; text-shadow:0 0 40px rgba(239,159,39,0.3); }
+.timer-sub { font-size:11px; color:#444; text-align:center; margin-top:-4px; margin-bottom:10px; letter-spacing:0.12em; text-transform:uppercase; }
+.dose-label { font-size:11px; color:#444; text-align:right; margin-top:4px; }
 
-.log-entry { display:flex; justify-content:space-between; align-items:center;
-             padding:10px 0; border-bottom:1px solid #2e2e2e; font-size:13px; }
+.log-entry { display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid #1e1e1e; font-size:13px; }
 .log-entry:last-child { border-bottom:none; }
-.log-dot-safe   { width:8px; height:8px; border-radius:50%; background:#4ade80; flex-shrink:0; }
-.log-dot-danger { width:8px; height:8px; border-radius:50%; background:#f87171; flex-shrink:0; }
-.log-dot-warn   { width:8px; height:8px; border-radius:50%; background:#EF9F27; flex-shrink:0; }
+.log-dot-safe   { width:7px; height:7px; border-radius:50%; background:#4ade80; flex-shrink:0; box-shadow:0 0 6px rgba(74,222,128,0.6); }
+.log-dot-danger { width:7px; height:7px; border-radius:50%; background:#f87171; flex-shrink:0; box-shadow:0 0 6px rgba(248,113,113,0.6); }
+.log-dot-warn   { width:7px; height:7px; border-radius:50%; background:#EF9F27; flex-shrink:0; box-shadow:0 0 6px rgba(239,159,39,0.6); }
 
-.chart-wrap { display:flex; align-items:flex-end; gap:7px; height:70px; margin-bottom:6px; }
-.bar-col    { display:flex; flex-direction:column; align-items:center; gap:3px; flex:1; }
-.bar-rect   { width:100%; border-radius:3px 3px 0 0; }
-.bar-lbl    { font-size:10px; color:#666; }
-.bar-val    { font-size:9px; color:#888; }
+.chart-wrap { display:flex; align-items:flex-end; gap:8px; height:80px; margin-bottom:6px; }
+.bar-col    { display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; }
+.bar-rect   { width:100%; border-radius:4px 4px 0 0; }
+.bar-lbl    { font-size:10px; color:#444; font-weight:600; }
+.bar-val    { font-size:9px; color:#555; }
 
-.score-big  { font-size:52px; font-weight:600; line-height:1; }
-.score-desc { font-size:14px; color:#ccc; margin-top:2px; }
-.score-sub  { font-size:12px; color:#555; margin-top:2px; }
+.score-big  { font-size:56px; font-weight:700; line-height:1; letter-spacing:-0.03em; }
+.score-desc { font-size:14px; color:#ccc; margin-top:4px; font-weight:500; }
+.score-sub  { font-size:11px; color:#444; margin-top:3px; }
 
-.toggle-lbl { font-size:14px; color:#e0e0e0; }
-.toggle-sub { font-size:11px; color:#555; margin-top:2px; }
+.toggle-lbl { font-size:14px; color:#e0e0e0; font-weight:500; }
+.toggle-sub { font-size:11px; color:#444; margin-top:2px; }
 
 .stButton>button {
-    width:100%; background:#EF9F27 !important; color:#1a1a1a !important;
-    border:none !important; border-radius:12px !important; height:48px !important;
-    font-size:15px !important; font-weight:600 !important; font-family:'DM Sans',sans-serif !important;
+    width:100%;
+    background:linear-gradient(135deg,#EF9F27 0%,#d4891a 100%) !important;
+    color:#0f0f0f !important; border:none !important; border-radius:14px !important;
+    height:50px !important; font-size:14px !important; font-weight:700 !important;
+    font-family:'Space Grotesk',sans-serif !important; letter-spacing:0.04em !important;
+    box-shadow:0 4px 20px rgba(239,159,39,0.25) !important;
 }
-.stop-btn .stButton>button { background:#3a3a3a !important; color:#e0e0e0 !important; }
+.stop-btn .stButton>button {
+    background:#1e1e1e !important; color:#888 !important;
+    box-shadow:none !important; border:1px solid #2a2a2a !important;
+}
 div[data-testid="stSelectbox"]>div>div {
-    background:#333 !important; border:1px solid #444 !important;
-    border-radius:8px !important; color:#e0e0e0 !important;
+    background:#1a1a1a !important; border:1px solid #2a2a2a !important;
+    border-radius:10px !important; color:#e0e0e0 !important;
 }
 div[data-testid="metric-container"] { display:none; }
-.stSlider label   { display:none !important; }
+.stSlider label    { display:none !important; }
 .stSelectbox label { display:none !important; }
+
+@keyframes pulse-glow {
+    0%   { opacity:0.5; }
+    50%  { opacity:1.0; }
+    100% { opacity:0.5; }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -105,7 +122,7 @@ defaults = {
     "session_active":   False,
     "start_time":       None,
     "last_tick":        None,
-    "dose":             0.0,      # cumulative 0.0 → 1.0+
+    "dose":             0.0,
     "elapsed_seconds":  0.0,
     "session_log":      [],
     "enforce_breaks":   True,
@@ -134,13 +151,12 @@ def safe_minutes(volume, output_type, preset="60/60"):
     return min(round(bm * (bv / ratio) ** 2), 120)
 
 def get_status(volume, output_type):
-    if output_type == "Speaker": return "speaker",  "Speaker"
-    if volume <  60:             return "safe",      "Safe"
-    if volume < 80:              return "caution",   "Caution"
+    if output_type == "Speaker": return "speaker", "Speaker"
+    if volume < 60:              return "safe",     "Safe"
+    if volume < 80:              return "caution",  "Caution"
     return "danger", "Loud"
 
 def dose_color(dose):
-    """Smooth green → amber → red interpolation."""
     d = min(dose, 1.0)
     if d < 0.6:
         t = d / 0.6
@@ -165,40 +181,98 @@ def fmt_mins(mins):
         return f"{h}h {m}m" if m else f"{h}h"
     return f"{mins}m"
 
-def ring_svg(dose, centre, sub, color):
-    r    = 62
-    circ = 2 * math.pi * r
-    rem  = max(0.0, 1.0 - dose)
-    dash = circ * rem
-    gap  = circ - dash
-    return f"""
-    <div style="display:flex;flex-direction:column;align-items:center;padding:8px 0 4px;">
-      <svg width="170" height="170" viewBox="0 0 160 160">
-        <circle cx="80" cy="80" r="{r}" fill="none" stroke="#3a3a3a" stroke-width="11"/>
-        <circle cx="80" cy="80" r="{r}" fill="none" stroke="{color}" stroke-width="11"
-          stroke-dasharray="{dash:.2f} {gap:.2f}" stroke-linecap="round"
-          transform="rotate(-90 80 80)"/>
-        <text x="80" y="72" text-anchor="middle" fill="#f0f0f0"
-          font-family="DM Sans,sans-serif" font-size="26" font-weight="500">{centre}</text>
-        <text x="80" y="94" text-anchor="middle" fill="#666"
-          font-family="DM Sans,sans-serif" font-size="12">{sub}</text>
-      </svg>
-      <div style="font-size:13px;color:#555;margin-top:2px;">Cumulative ear exposure</div>
-    </div>"""
+def build_ring(dose, centre, sub, color, is_active):
+    R      = 68
+    CX, CY = 90, 90
+    circ   = 2 * math.pi * R
+    filled = min(dose, 1.0)
+    dash   = round(circ * filled, 2)
+    gap    = round(circ - dash, 2)
+    pct    = int(filled * 100)
+    glow_opacity = round(0.12 + filled * 0.28, 2)
+
+    # pulse style
+    pulse = ""
+    if is_active and filled > 0:
+        speed = round(max(1.2, 3.0 - filled * 2.0), 1)
+        pulse = "animation:pulse-glow " + str(speed) + "s ease-in-out infinite;"
+
+    # build tick marks as plain string
+    ticks = ""
+    for i in range(10):
+        angle_rad = math.radians(-90 + i * 36)
+        ox = round(CX + (R + 10) * math.cos(angle_rad), 1)
+        oy = round(CY + (R + 10) * math.sin(angle_rad), 1)
+        ix = round(CX + (R + 5)  * math.cos(angle_rad), 1)
+        iy = round(CY + (R + 5)  * math.sin(angle_rad), 1)
+        tc = color if (i / 10) <= filled else "#2a2a2a"
+        ticks += ('<line x1="' + str(ox) + '" y1="' + str(oy) + '" '
+                  'x2="' + str(ix) + '" y2="' + str(iy) + '" '
+                  'stroke="' + tc + '" stroke-width="2" stroke-linecap="round"/>')
+
+    # leading edge dot
+    lead_dot = ""
+    if 0.01 < filled < 1.0:
+        la = math.radians(-90 + filled * 360)
+        dx = round(CX + R * math.cos(la), 1)
+        dy = round(CY + R * math.sin(la), 1)
+        lead_dot = ('<circle cx="' + str(dx) + '" cy="' + str(dy) + '" r="5.5" '
+                    'fill="' + color + '" opacity="0.9"/>')
+
+    # build SVG entirely with string concatenation — no f-string
+    svg = (
+        '<svg width="210" height="210" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">'
+        '<defs>'
+        '<radialGradient id="rglow" cx="50%" cy="50%" r="50%">'
+        '<stop offset="0%" stop-color="' + color + '" stop-opacity="' + str(glow_opacity) + '"/>'
+        '<stop offset="100%" stop-color="' + color + '" stop-opacity="0"/>'
+        '</radialGradient>'
+        '</defs>'
+        # ambient glow
+        '<circle cx="90" cy="90" r="75" fill="url(#rglow)" style="' + pulse + '"/>'
+        # track ring
+        '<circle cx="90" cy="90" r="' + str(R) + '" fill="none" stroke="#1e1e1e" stroke-width="10"/>'
+        # tick marks
+        + ticks +
+        # filled arc
+        '<circle cx="90" cy="90" r="' + str(R) + '" fill="none"'
+        ' stroke="' + color + '" stroke-width="10"'
+        ' stroke-dasharray="' + str(dash) + ' ' + str(gap) + '"'
+        ' stroke-linecap="round"'
+        ' transform="rotate(-90 90 90)"/>'
+        # leading dot
+        + lead_dot +
+        # centre percentage
+        '<text x="90" y="76" text-anchor="middle"'
+        ' fill="#f5f5f5" font-family="JetBrains Mono,monospace"'
+        ' font-size="30" font-weight="500">' + str(pct) + '%</text>'
+        # time remaining
+        '<text x="90" y="100" text-anchor="middle"'
+        ' fill="' + color + '" font-family="Space Grotesk,sans-serif"'
+        ' font-size="14" font-weight="600">' + str(centre) + '</text>'
+        # sub label
+        '<text x="90" y="116" text-anchor="middle"'
+        ' fill="#383838" font-family="Space Grotesk,sans-serif"'
+        ' font-size="9" letter-spacing="1.5">' + sub.upper() + '</text>'
+        '</svg>'
+    )
+
+    html = (
+        '<div style="display:flex;flex-direction:column;align-items:center;padding:10px 0 4px;">'
+        + svg
+        + '<div style="font-size:10px;color:#2e2e2e;letter-spacing:0.16em;'
+          'text-transform:uppercase;margin-top:2px;">Live Device Volume</div>'
+        + '</div>'
+    )
+    return html
 
 def tick_dose():
-    """
-    Advance cumulative dose.
-    dose += delta_seconds / safe_limit_seconds_at_current_volume
-    Changing volume mid-session changes the RATE, not the accumulated dose.
-    This closes the 'lower volume to reset' loophole entirely.
-    """
     now = time.time()
     if st.session_state.last_tick is None:
         st.session_state.last_tick = now
         return
     delta = now - st.session_state.last_tick
-    st.session_state.last_tick       = now
+    st.session_state.last_tick        = now
     st.session_state.elapsed_seconds += delta
     limit_s = safe_minutes(
         st.session_state.volume,
@@ -220,15 +294,20 @@ def end_session():
               "warned_75","warned_90","warned_100"]:
         st.session_state[k] = defaults[k]
 
-# ── Tick if session running ──────────────────────────────────────────────────
+# ── Tick ─────────────────────────────────────────────────────────────────────
 if st.session_state.session_active:
     tick_dose()
 
-# ── Derived values ───────────────────────────────────────────────────────────
+# ── Derived values ────────────────────────────────────────────────────────────
 dose      = st.session_state.dose
 cur_safe  = safe_minutes(st.session_state.volume, st.session_state.output_type, st.session_state.rule_preset)
 status_k, status_l = get_status(st.session_state.volume, st.session_state.output_type)
-arc_col   = dose_color(dose) if st.session_state.session_active else "#EF9F27"
+if st.session_state.volume <= 60:
+    arc_col = "#4ade80"
+elif st.session_state.volume <= 80:
+    arc_col = "#EF9F27"
+else:
+    arc_col = "#f87171"
 
 if st.session_state.session_active:
     rem_mins    = math.ceil(max(0.0, 1.0 - dose) * cur_safe)
@@ -236,30 +315,41 @@ if st.session_state.session_active:
     ring_sub    = "remaining"
 else:
     ring_centre = fmt_mins(cur_safe)
-    ring_sub    = "at this volume"
+    ring_sub    = "at this vol"
     dose        = 0.0
 
-# ── Header ───────────────────────────────────────────────────────────────────
-badge_map = {"safe":"badge-safe","caution":"badge-caution","danger":"badge-danger","speaker":"badge-speaker"}
-st.markdown(f"""
-<div class="eg-header">
-  <span class="eg-logo">🎧 EarGuard</span>
-  <span class="{badge_map[status_k]}">{status_l}</span>
-</div>""", unsafe_allow_html=True)
+# ── Header ────────────────────────────────────────────────────────────────────
+badge_map = {
+    "safe":    "badge-safe",
+    "caution": "badge-caution",
+    "danger":  "badge-danger",
+    "speaker": "badge-speaker",
+}
+st.markdown(
+    f'<div class="eg-header">'
+    f'<span class="eg-logo">Ear<span>Guard</span></span>'
+    f'<span class="{badge_map[status_k]}">{status_l}</span>'
+    f'</div>',
+    unsafe_allow_html=True
+)
 
 tab_home, tab_stats, tab_settings = st.tabs(["◎  Home", "▦  Stats", "⚙  Settings"])
 
-# ═════════════════════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════
 # HOME
-# ═════════════════════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════
 with tab_home:
 
-    # Ring
-    st.markdown(f'<div class="eg-card">{ring_svg(dose, ring_centre, ring_sub, arc_col)}</div>',
-                unsafe_allow_html=True)
+    # ── Ring ──
+    vol_frac = st.session_state.volume / 100.0
+    ring_html = build_ring(vol_frac, ring_centre, ring_sub, arc_col, st.session_state.session_active)
+    st.markdown(
+        '<div class="eg-card" style="padding:10px 10px 16px;">' + ring_html + '</div>',
+        unsafe_allow_html=True
+    )
 
-    # Output device
-    out_opts = ["In-ear headphones","Over-ear headphones","Bluetooth headphones","Speaker"]
+    # ── Output device ──
+    out_opts = ["In-ear headphones", "Over-ear headphones", "Bluetooth headphones", "Speaker"]
     st.markdown('<div class="eg-card"><div class="eg-card-title">Output device</div>', unsafe_allow_html=True)
     sel = st.selectbox("out", out_opts,
                        index=out_opts.index(st.session_state.output_type),
@@ -269,49 +359,70 @@ with tab_home:
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Volume
+    # ── Volume ──
     vc = "#4ade80" if st.session_state.volume <= 60 else "#EF9F27" if st.session_state.volume <= 80 else "#f87171"
-    st.markdown(f"""
-    <div class="eg-card">
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-        <span style="font-size:14px;font-weight:500;">Volume</span>
-        <span style="font-size:14px;font-weight:500;color:{vc};">{st.session_state.volume}%</span>
-      </div>
-      <div class="vol-track"><div class="vol-fill" style="width:{st.session_state.volume}%;background:{vc};"></div></div>""",
-        unsafe_allow_html=True)
-    new_vol = st.slider("vol", 0, 100, st.session_state.volume, key="vol_sl", label_visibility="collapsed")
-    st.markdown('<p style="font-size:12px;color:#444;margin-top:4px;">Drag to set volume level</p></div>',
-                unsafe_allow_html=True)
-    if new_vol != st.session_state.volume:
-        st.session_state.volume = new_vol
-        # dose intentionally NOT reset — only the accumulation rate changes
-        st.rerun()
+    st.markdown(
+        f'<div class="eg-card">'
+        f'<div style="display:flex;justify-content:space-between;margin-bottom:8px;align-items:center;">'
+        f'<span style="font-size:13px;font-weight:600;color:#888;letter-spacing:0.08em;text-transform:uppercase;">Volume</span>'
+        f'<span style="font-size:22px;font-weight:700;color:{vc};font-family:\'JetBrains Mono\',monospace;">{st.session_state.volume}%</span>'
+        f'</div>'
+        f'<div class="vol-track"><div class="vol-fill" style="width:{st.session_state.volume}%;background:{vc};"></div></div>',
+        unsafe_allow_html=True
+    )
 
-    # Status banner
+    # Hardware bridge check
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    vol_file   = os.path.join(SCRIPT_DIR, "current_volume.txt")
+
+    if os.path.exists(vol_file):
+        try:
+            with open(vol_file, "r") as f:
+                bridge_vol = int(f.read().strip())
+        except Exception:
+            bridge_vol = st.session_state.volume
+        st.markdown(
+            '<p style="font-size:11px;color:#60a5fa;margin-top:6px;letter-spacing:0.06em;">⬤ LIVE · Reading from OS hardware</p></div>',
+            unsafe_allow_html=True
+        )
+        if bridge_vol != st.session_state.volume:
+            st.session_state.volume = bridge_vol
+            st.rerun()
+    else:
+        new_vol = st.slider("vol", 0, 100, st.session_state.volume, key="vol_sl", label_visibility="collapsed")
+        st.markdown(
+            '<p style="font-size:11px;color:#333;margin-top:4px;letter-spacing:0.06em;">Drag to set volume level</p></div>',
+            unsafe_allow_html=True
+        )
+        if new_vol != st.session_state.volume:
+            st.session_state.volume = new_vol
+            st.rerun()
+
+    # ── Status banner ──
     banners = {
-        "speaker": ('<div class="alert-info">📢 Speaker mode — no ear tracking needed.</div>', ),
-        "safe":    ('<div class="alert-safe">✓ Within safe listening range.</div>', ),
-        "caution": ('<div class="alert-warn">⚠ Caution — consider lowering volume.</div>', ),
-        "danger":  ('<div class="alert-danger">⬤ Loud — dose accumulating fast.</div>', ),
+        "speaker": '<div class="alert-info">📢 Speaker mode — no ear tracking needed.</div>',
+        "safe":    '<div class="alert-safe">✓ Within safe listening range.</div>',
+        "caution": '<div class="alert-warn">⚠ Caution — consider lowering volume.</div>',
+        "danger":  '<div class="alert-danger">⬤ Loud — dose accumulating fast.</div>',
     }
-    st.markdown(banners[status_k][0], unsafe_allow_html=True)
+    st.markdown(banners[status_k], unsafe_allow_html=True)
 
-    # Quick stats
+    # ── Quick stats ──
     total_today = sum(s["duration"] for s in st.session_state.session_log)
     sessions_n  = len(st.session_state.session_log)
-    st.markdown(f"""
-    <div class="metric-grid">
-      <div class="metric-box"><div class="metric-lbl">Today</div>
-        <div class="metric-val">{fmt_mins(round(total_today))}</div></div>
-      <div class="metric-box"><div class="metric-lbl">Sessions</div>
-        <div class="metric-val">{sessions_n}</div></div>
-    </div>""", unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="metric-grid">'
+        f'<div class="metric-box"><div class="metric-lbl">Today</div><div class="metric-val">{fmt_mins(round(total_today))}</div></div>'
+        f'<div class="metric-box"><div class="metric-lbl">Sessions</div><div class="metric-val">{sessions_n}</div></div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
 
-    # Session tracker
+    # ── Session tracker ──
     st.markdown('<div class="eg-card"><div class="eg-card-title">Session tracker</div>', unsafe_allow_html=True)
 
     if status_k == "speaker":
-        st.markdown('<p style="color:#555;font-size:13px;">Tracking paused — speaker in use.</p>', unsafe_allow_html=True)
+        st.markdown('<p style="color:#444;font-size:13px;">Tracking paused — speaker in use.</p>', unsafe_allow_html=True)
 
     elif not st.session_state.session_active:
         if st.button("▶  Start listening session"):
@@ -329,17 +440,15 @@ with tab_home:
         prog_col = dose_color(d)
 
         st.markdown(f'<div class="timer-big">{fmt_duration(st.session_state.elapsed_seconds)}</div>', unsafe_allow_html=True)
-        st.markdown('<div class="timer-sub">session duration</div>', unsafe_allow_html=True)
+        st.markdown('<div class="timer-sub">Session duration</div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="prog-track">'
+            f'<div class="prog-fill" style="width:{min(d,1)*100:.1f}%;background:{prog_col};"></div>'
+            f'</div>'
+            f'<div class="dose-label">Ear dose: {min(d*100,100):.0f}% &nbsp;·&nbsp; limit at {st.session_state.volume}% vol = {fmt_mins(cur_safe)}</div>',
+            unsafe_allow_html=True
+        )
 
-        st.markdown(f"""
-        <div class="prog-track">
-          <div class="prog-fill" style="width:{min(d,1)*100:.1f}%;background:{prog_col};"></div>
-        </div>
-        <div class="dose-label">
-          Ear dose: {min(d*100,100):.0f}% &nbsp;·&nbsp; rate: {fmt_mins(cur_safe)} limit at {st.session_state.volume}% vol
-        </div>""", unsafe_allow_html=True)
-
-        # Progressive warnings
         if d >= 1.0:
             if not st.session_state.warned_100:
                 st.session_state.warned_100 = True
@@ -357,114 +466,127 @@ with tab_home:
             end_session()
             st.rerun()
 
-        st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
         st.markdown('<div class="stop-btn">', unsafe_allow_html=True)
         if st.button("⏹  End session"):
             end_session()
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
-        time.sleep(0.5)   # 0.5s = snappy but not hammering the CPU
+        time.sleep(0.5)
         st.rerun()
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Today's log
+    # ── Today's log ──
     st.markdown('<div class="eg-card"><div class="eg-card-title">Today\'s log</div>', unsafe_allow_html=True)
     if st.session_state.session_log:
         for s in reversed(st.session_state.session_log):
             dot = "log-dot-danger" if s["over_limit"] else "log-dot-warn" if s["dose"] >= 75 else "log-dot-safe"
-            st.markdown(f"""
-            <div class="log-entry">
-              <div style="display:flex;align-items:center;gap:10px;">
-                <div class="{dot}"></div>
-                <div>
-                  <div style="color:#e0e0e0;">{s['time']} · {s['device']}</div>
-                  <div style="font-size:11px;color:#555;">{s['volume']}% vol · dose: {s['dose']}%</div>
-                </div>
-              </div>
-              <div style="color:#888;font-size:13px;">{s['duration']} min</div>
-            </div>""", unsafe_allow_html=True)
+            st.markdown(
+                f'<div class="log-entry">'
+                f'<div style="display:flex;align-items:center;gap:10px;">'
+                f'<div class="{dot}"></div>'
+                f'<div><div style="color:#ccc;font-weight:500;">{s["time"]} · {s["device"]}</div>'
+                f'<div style="font-size:11px;color:#444;margin-top:1px;">{s["volume"]}% vol · dose: {s["dose"]}%</div>'
+                f'</div></div>'
+                f'<div style="color:#555;font-size:13px;font-family:\'JetBrains Mono\',monospace;">{s["duration"]}m</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
     else:
-        st.markdown('<p style="color:#555;font-size:13px;">No sessions yet today.</p>', unsafe_allow_html=True)
+        st.markdown('<p style="color:#333;font-size:13px;">No sessions yet today.</p>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-# ═════════════════════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════
 # STATS
-# ═════════════════════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════
 with tab_stats:
 
     days   = ['M','T','W','T','F','S','S']
     hours  = [1.2, 2.8, 1.0, 3.4, 0.8, 2.1, 1.4]
     colors = ['#4ade80','#f87171','#4ade80','#f87171','#4ade80','#EF9F27','#4ade80']
-    today_h = sum(s["duration"] for s in st.session_state.session_log) / 60
+    today_h   = sum(s["duration"] for s in st.session_state.session_log) / 60
     hours[6]  = round(today_h, 1)
     colors[6] = '#f87171' if today_h > 3 else '#EF9F27' if today_h > 2 else '#4ade80'
-    max_h = max(hours) if max(hours) > 0 else 1
+    max_h     = max(hours) if max(hours) > 0 else 1
 
     bars = "".join(
-        f'<div class="bar-col"><div class="bar-val">{h}h</div>'
-        f'<div class="bar-rect" style="height:{max(4,int(h/max_h*52))}px;background:{c};"></div>'
-        f'<div class="bar-lbl">{d}</div></div>'
+        f'<div class="bar-col">'
+        f'<div class="bar-val" style="color:{c};">{h}h</div>'
+        f'<div class="bar-rect" style="height:{max(4,int(h/max_h*60))}px;background:{c};opacity:0.85;box-shadow:0 0 8px {c}55;"></div>'
+        f'<div class="bar-lbl">{d}</div>'
+        f'</div>'
         for d, h, c in zip(days, hours, colors)
     )
-    legend = """<div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap;">
-      <span style="font-size:11px;color:#555;display:flex;align-items:center;gap:4px;">
-        <span style="width:8px;height:8px;border-radius:2px;background:#4ade80;display:inline-block"></span>Safe</span>
-      <span style="font-size:11px;color:#555;display:flex;align-items:center;gap:4px;">
-        <span style="width:8px;height:8px;border-radius:2px;background:#EF9F27;display:inline-block"></span>Warning</span>
-      <span style="font-size:11px;color:#555;display:flex;align-items:center;gap:4px;">
-        <span style="width:8px;height:8px;border-radius:2px;background:#f87171;display:inline-block"></span>Over limit</span>
-    </div>"""
+    legend = (
+        '<div style="display:flex;gap:14px;margin-top:12px;flex-wrap:wrap;">'
+        '<span style="font-size:10px;color:#444;display:flex;align-items:center;gap:5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">'
+        '<span style="width:6px;height:6px;border-radius:2px;background:#4ade80;display:inline-block;"></span>Safe</span>'
+        '<span style="font-size:10px;color:#444;display:flex;align-items:center;gap:5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">'
+        '<span style="width:6px;height:6px;border-radius:2px;background:#EF9F27;display:inline-block;"></span>Warning</span>'
+        '<span style="font-size:10px;color:#444;display:flex;align-items:center;gap:5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">'
+        '<span style="width:6px;height:6px;border-radius:2px;background:#f87171;display:inline-block;"></span>Over limit</span>'
+        '</div>'
+    )
+    st.markdown(
+        '<div class="eg-card"><div class="eg-card-title">This week</div>'
+        + '<div class="chart-wrap">' + bars + '</div>'
+        + legend + '</div>',
+        unsafe_allow_html=True
+    )
 
-    st.markdown(f'<div class="eg-card"><div class="eg-card-title">This week</div>'
-                f'<div class="chart-wrap">{bars}</div>{legend}</div>', unsafe_allow_html=True)
-
-    avg_vol = round(sum(s["volume"] for s in st.session_state.session_log) /
-                    len(st.session_state.session_log)) if st.session_state.session_log else 68
+    avg_vol = (round(sum(s["volume"] for s in st.session_state.session_log) /
+               len(st.session_state.session_log)) if st.session_state.session_log else 68)
     over_n  = sum(1 for s in st.session_state.session_log if s["over_limit"])
 
-    st.markdown(f"""
-    <div class="metric-grid">
-      <div class="metric-box"><div class="metric-lbl">Weekly avg</div><div class="metric-val">1h 41m</div></div>
-      <div class="metric-box"><div class="metric-lbl">Safe days</div><div class="metric-val">{max(0,7-over_n)} / 7</div></div>
-      <div class="metric-box"><div class="metric-lbl">Avg volume</div><div class="metric-val">{avg_vol}%</div></div>
-      <div class="metric-box"><div class="metric-lbl">Breaks taken</div><div class="metric-val">{sessions_n}</div></div>
-    </div>""", unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="metric-grid">'
+        f'<div class="metric-box"><div class="metric-lbl">Weekly avg</div><div class="metric-val">1h 41m</div></div>'
+        f'<div class="metric-box"><div class="metric-lbl">Safe days</div><div class="metric-val">{max(0,7-over_n)} / 7</div></div>'
+        f'<div class="metric-box"><div class="metric-lbl">Avg volume</div><div class="metric-val">{avg_vol}%</div></div>'
+        f'<div class="metric-box"><div class="metric-lbl">Breaks taken</div><div class="metric-val">{sessions_n}</div></div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
 
     score  = max(30, min(100, 100 - over_n * 8 - max(0, avg_vol - 60) // 5))
     sc_col = "#4ade80" if score >= 70 else "#EF9F27" if score >= 50 else "#f87171"
     sc_msg = "Good — keep it up" if score >= 70 else "Fair — try lower volumes" if score >= 50 else "Poor — take more breaks"
 
-    st.markdown(f"""
-    <div class="eg-card">
-      <div class="eg-card-title">Ear health score</div>
-      <div style="display:flex;align-items:center;gap:16px;">
-        <div class="score-big" style="color:{sc_col};">{score}</div>
-        <div><div class="score-desc">{sc_msg}</div>
-          <div class="score-sub">Based on volume + duration habits</div></div>
-      </div>
-    </div>""", unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="eg-card">'
+        f'<div class="eg-card-title">Ear health score</div>'
+        f'<div style="display:flex;align-items:center;gap:20px;">'
+        f'<div class="score-big" style="color:{sc_col};text-shadow:0 0 30px {sc_col}55;">{score}</div>'
+        f'<div><div class="score-desc">{sc_msg}</div>'
+        f'<div class="score-sub" style="margin-top:4px;">Based on volume + duration habits</div></div>'
+        f'</div></div>',
+        unsafe_allow_html=True
+    )
 
     st.markdown("""
     <div class="eg-card">
       <div class="eg-card-title">About the dose model</div>
-      <p style="font-size:13px;color:#666;line-height:1.7;">
-        EarGuard tracks <span style="color:#EF9F27;">cumulative ear dose</span>, not a simple countdown timer.
-        Lowering your volume mid-session slows how fast dose accumulates —
-        but <span style="color:#f87171;">never resets it</span>.
-        This is based on the ISO 1999 noise exposure standard used by audiologists.
+      <p style="font-size:13px;color:#555;line-height:1.8;">
+        EarGuard tracks <span style="color:#EF9F27;font-weight:600;">cumulative ear dose</span>,
+        not a simple countdown timer. Lowering volume slows accumulation —
+        but <span style="color:#f87171;font-weight:600;">never resets it</span>.
+        Based on the ISO 1999 noise exposure standard.
       </p>
-      <p style="font-size:13px;color:#555;line-height:1.8;margin-top:8px;">
-        60% volume → full dose in 60 min<br>
-        80% volume → full dose in ~34 min<br>
-        100% volume → full dose in ~22 min
-      </p>
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#444;font-family:'JetBrains Mono',monospace;">
+          <span>60% vol</span><span style="color:#4ade80;">60 min safe</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#444;font-family:'JetBrains Mono',monospace;">
+          <span>80% vol</span><span style="color:#EF9F27;">~34 min safe</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#444;font-family:'JetBrains Mono',monospace;">
+          <span>100% vol</span><span style="color:#f87171;">~22 min safe</span></div>
+      </div>
     </div>""", unsafe_allow_html=True)
 
-# ═════════════════════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════
 # SETTINGS
-# ═════════════════════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════
 with tab_settings:
 
     st.markdown('<div class="eg-card"><div class="eg-card-title">Limiter mode</div>', unsafe_allow_html=True)
@@ -511,10 +633,11 @@ with tab_settings:
             st.session_state[k] = defaults[k]
         st.rerun()
 
-    st.markdown("""
-    <div style="text-align:center;color:#333;font-size:11px;margin-top:20px;">
-      EarGuard · WHO 60/60 · ISO 1999 dose model · v1.1
-    </div>""", unsafe_allow_html=True)
+    st.markdown(
+        '<div style="text-align:center;color:#2a2a2a;font-size:11px;margin-top:24px;'
+        'letter-spacing:0.12em;text-transform:uppercase;">'
+        'EarGuard · WHO 60/60 · ISO 1999 · v1.2</div>',
+        unsafe_allow_html=True
+    )
 
-
-#python -m streamlit run "c:/Users/kavya/Journey/Self Projects/earguard.py"
+# python -m streamlit run "c:/Users/kavya/Journey/Self Projects/earguard/earguard.py"
